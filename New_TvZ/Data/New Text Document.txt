@@ -1,0 +1,159 @@
+import pygame
+from pygame.locals import *
+import sys
+
+pygame.init()
+pygame.font.init()
+pygame.mixer.init()
+clock = pygame.time.Clock()
+
+# Background
+background = pygame.image.load("Background/Backgnd.png")
+
+# Vehicles on road
+ambulance = pygame.image.load("Road_1/ambulance.png").convert_alpha()
+buggy = pygame.image.load("Road_1/buggy.png").convert_alpha()
+truck = pygame.image.load("Road_1/truckdelivery.png").convert_alpha()
+
+school_bus = pygame.image.load("Road_2/bus_school.png").convert_alpha()
+convertible = pygame.image.load("Road_2/convertible.png").convert_alpha()
+
+transport = pygame.image.load("Road_3/transport.png").convert_alpha()
+sedan = pygame.image.load("Road_3/sedan.png").convert_alpha()
+police = pygame.image.load("Road_3/police.png").convert_alpha()
+
+vehicle_rectangles = {
+    'ambulance': ambulance.get_rect(topleft=(ambulance_x_pos, 125)),
+    'buggy': buggy.get_rect(topleft=(buggy_x_pos, 125)),
+    'truck': truck.get_rect(topleft=(truck_x_pos, 125)),
+    'school_bus': school_bus.get_rect(topleft=(school_bus_x_pos, 260)),
+    'convertible': convertible.get_rect(topleft=(convertible_x_pos, 260)),
+    'police': police.get_rect(topleft=(police_x_pos, 395))
+}
+
+# Player implementation
+zombie = pygame.image.load("Player/zombie.png").convert_alpha()
+zombie_x_pos = 5
+zombie_y_pos = 25
+zombie_rect = zombie.get_rect(midtop=(zombie_x_pos, zombie_y_pos))
+pygame.key.set_repeat(1, 100)
+
+collision_sound = pygame.mixer.Sound("Sound/Mario Death - Sound Effect (HD).mp3")
+collision_sound.set_volume(0.5)
+collision_status = {
+    'ambulance': False,
+    'buggy': False,
+    'truck': False,
+    'school_bus': False,
+    'convertible': False,
+    'police': False,
+}
+
+# Functions
+def vehicle_movement():
+    # Motion of vehicles on road
+    global ambulance_x_pos, buggy_x_pos, truck_x_pos, school_bus_x_pos, convertible_x_pos, police_x_pos
+    ambulance_x_pos += 4
+    if ambulance_x_pos >= 1320:
+        ambulance_x_pos = 0
+    vehicle_rectangles['ambulance'].topleft = (ambulance_x_pos, 125)
+
+    buggy_x_pos += 4
+    if buggy_x_pos >= 1320:
+        buggy_x_pos = 0
+    vehicle_rectangles['buggy'].topleft = (buggy_x_pos, 125)
+
+    truck_x_pos += 4
+    if truck_x_pos >= 1320:
+        truck_x_pos = 0
+    vehicle_rectangles['truck'].topleft = (truck_x_pos, 125)
+
+    school_bus_x_pos -= 7
+    if school_bus_x_pos <= -10:
+        school_bus_x_pos = 1300
+    vehicle_rectangles['school_bus'].topleft = (school_bus_x_pos, 260)
+
+    convertible_x_pos -= 7
+    if convertible_x_pos <= -10:
+        convertible_x_pos = 1300
+    vehicle_rectangles['convertible'].topleft = (convertible_x_pos, 260)
+
+    police_x_pos += 10
+    if police_x_pos > 1320:
+        police_x_pos = 0
+
+        police_x_pos += 10
+    if police_x_pos > 1320:
+        police_x_pos = 0
+    vehicle_rectangles['police'].topleft = (police_x_pos, 395)
+
+def handle_collision(collided_vehicle):
+    collision_sound.play()
+    collision_status[collided_vehicle] = True
+    print(f"Collision with {collided_vehicle} detected!")
+    
+def game_over_screen():
+    # ... your existing game over screen implementation ...
+
+def main():
+    screen = pygame.display.set_mode((1300, 650))
+    pygame.display.set_caption("Traffic vs Zombie FPS")
+
+    running = True
+    collided_vehicles = set()  # Use a set to store collided vehicles and avoid duplicates
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                pygame.quit()
+                sys.exit()
+
+            # Player Movement
+            keys = pygame.key.get_pressed()
+            zombie_x_pos += (keys[pygame.K_d] - keys[pygame.K_a]) * c
+            zombie_y_pos += (keys[pygame.K_s] - keys[pygame.K_w]) * c
+            zombie_rect.center = (zombie_x_pos, zombie_y_pos)
+
+            # Check for collisions
+            collided_vehicles = set()  # Reset collided vehicles every frame
+            for vehicle_name, vehicle_rect in vehicle_rectangles.items():
+                if zombie_rect.colliderect(vehicle_rect) and not collision_status[vehicle_name]:
+                    collided_vehicles.add(vehicle_name)  # Add to collided vehicles set
+                    handle_collision(vehicle_name)
+
+            # Handle collisions - check if any new collisions happened
+            if collided_vehicles:
+                for vehicle in collided_vehicles:
+                    # Handle collision response for each newly collided vehicle
+                    if vehicle == 'ambulance':
+                        # Handle ambulance collision
+                        ...
+                    elif vehicle == 'buggy':
+                        # Handle buggy collision
+                        ...
+                    # ... handle other vehicles ...
+
+                    # Reset collision status (optional)
+                    collision_status[vehicle] = False
+
+        screen.blit(background, (0, 0))  # Draw background at (0, 0)
+        screen.blit(zombie, zombie_rect)  # Draw zombie at its updated position
+        for vehicle_name, vehicle_rect in vehicle_rectangles.items():
+            screen.blit(vehicle, vehicle_rect)  # Draw vehicles at their updated positions
+        vehicle_movement()
+
+        pygame.display.flip()
+        clock.tick(60)
+
+if __name__ == "__main__":
+    main()
+
+game_over_font = pygame.font.Font("Font/BloodLust.ttf", 100)
+    screen.fill("Blue")
+    game_over_text = game_over_font.render("GAME OVER", 1, (136, 8, 8))
+    screen.blit(game_over_text, (450,275))
+    continue_font = pygame.font.Font("Font/MyGirlIsRetro-0Grz.ttf", 50)
+    continue_text = continue_font.render("Press enter to restart", 1,(136, 8, 8))
+    screen.blit(continue_text,(400,500))
+    pygame.display.update()
