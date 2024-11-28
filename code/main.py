@@ -1,4 +1,4 @@
-import pygame, sys, time
+import pygame, sys, time, random
 from settings import *
 
 
@@ -12,9 +12,17 @@ class Ground:
             player.player_pos.x - CIRCLE_RADIUS,
             player.player_pos.y - CIRCLE_RADIUS,
             CIRCLE_RADIUS * 2,
-            CIRCLE_RADIUS * 2
+            CIRCLE_RADIUS * 2 + 1
         )
         return circle_rect.colliderect(self.game.ground_rect)
+
+class Platforms(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        self.image = pygame.Surface((width, height))
+        self.image.fill("red")
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 
 class Player:
@@ -25,9 +33,14 @@ class Player:
         self.jump_strength = JUMP_STRENGHT
         self.ground = ground  # Reference to Ground
         self.player_rect = pygame.Rect(self.player_pos.x, self.player_pos.y, CIRCLE_DIAMETER, CIRCLE_DIAMETER)
+        self.bounce_factor = 0.6
+        self.vertical_velocity = 0
 
     def player_movements(self, delta_time, keys):
         self.direction = pygame.Vector2(0, 0)
+
+        if(self.direction.length() > 100):
+            self.direction = self.direction.normalize()
 
         # Horizontal Movement
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -37,24 +50,22 @@ class Player:
             self.direction.x += 1 * self.player_speed_on_x
 
         # Vertical Movement (Simulating Gravity + Jump)
-        if keys[pygame.K_SPACE]:
-            self.direction.y -= self.jump_strength * self.player_speed_on_y * .16
-        else:
-            self.direction.y += self.jump_strength * self.player_speed_on_y * delta_time * 2
+        self.vertical_velocity += self.jump_strength * delta_time
+        if keys[pygame.K_SPACE] and (self.ground.circle_collide_with_ground(self)):
+            self.vertical_velocity = -self.jump_strength * self.player_speed_on_y * 0.16
 
         # Update Position
         self.player_pos.x += self.direction.x * self.player_speed_on_x * delta_time * 2
-        self.player_pos.y += self.direction.y * self.player_speed_on_y * delta_time * 2
+        self.player_pos.y += self.vertical_velocity * delta_time * 2
 
         # Debug Position
         print(f"Player Position: {self.player_pos}")
 
         # Keep Player Within Window Boundaries
         self.player_pos.x = max(CIRCLE_RADIUS, min(WINDOW_WIDTH - CIRCLE_RADIUS, self.player_pos.x))
-        self.player_pos.y = max(CIRCLE_RADIUS, min(self.ground.ground_pos.y - CIRCLE_RADIUS, self.player_pos.y))
 
-        if(self.direction.length() > 100):
-            self.direction = self.direction.normalize()
+        if(self.player_pos.y >= self.ground.ground_pos.y - CIRCLE_RADIUS):
+            self.player_pos.y = self.ground.ground_pos.y - CIRCLE_RADIUS  # Reset to ground level
 
     def reset_position(self):
         self.player_pos = pygame.Vector2(PLAYER_ORIGINAL_POS_X, PLAYER_ORIGINAL_POS_Y)
@@ -84,6 +95,7 @@ class Game:
         self.channel2 = pygame.mixer.Channel(1)
 
         self.on_collision = False
+        self.on_ground = False
 
     def circle_pos(self):
         return (int(self.player.player_pos.x), int(self.player.player_pos.y))
@@ -100,7 +112,6 @@ class Game:
     def run(self):
         last_time = time.time()
         self.bg_music()
-        tolerance = 2
 
         while True:
             delta_time = time.time() - last_time
@@ -123,14 +134,19 @@ class Game:
             pygame.draw.rect(self.display_surface, "red", self.ground_rect)
 
             # Collision Check
-            # if self.ground.circle_collide_with_ground(self.player):
-            #     self.player.player_jump(delta_time)
-            #     self.sound_on_impact()
-            #     self.on_collision = False
-            #     print("COllision Happened!!!")
+            if self.ground.circle_collide_with_ground(self.player):
+                if (self.on_ground != True):
+                    self.sound_on_impact()
+                    self.on_ground = True
+                    print("Collision Happened!!!")
+            else:
+                self.on_ground = False
 
-            if(self.ground_rect.colliderect(self.player.player_rect.bottom)):
-                print("Collision Happened!!!")
+            if(self.player.player_pos.x - CIRCLE_RADIUS < 0) or (self.player.player_pos.x > (WINDOW_WIDTH - self.ground.ground_pos.x)):
+                self.player.player_speed_on_x = -self.player.player_speed_on_x
+
+            if(self.player.player_pos.y - CIRCLE_RADIUS < 0) or (self.player.player_pos.x > (WINDOW_HEIGHT - self.ground.ground_pos.y)):
+                self.player.player_speed_on_y = -self.player.player_speed_on_y
 
             # Update Display
             pygame.display.flip()

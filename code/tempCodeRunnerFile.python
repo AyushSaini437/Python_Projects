@@ -1,0 +1,47 @@
+import pygame
+import random
+
+pygame.init()
+
+screen_width = 800
+screen_height = 600
+screen = pygame.display.set_mode((screen_width, screen_height))
+
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pygame.Surface((width, height))
+        self.image.fill((255, 0, 0))  # Red color for the platform
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+def spawn_platforms(platform_group, num_platforms):
+    for _ in range(num_platforms):
+        width = random.randint(50, 100)
+        height = 20
+        x = random.randint(0, screen_width - width)
+        y = random.randint(0, screen_height - height)
+        platform = Platform(x, y, width, height)
+        platform_group.add(platform)
+
+
+running = True
+clock = pygame.time.Clock()
+platform_group = pygame.sprite.Group()
+
+# Spawn initial platforms
+spawn_platforms(platform_group, 5)
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((0, 0, 0))  # Clear screen with black color
+    platform_group.draw(screen)  # Draw platforms
+    pygame.display.flip()  # Update the display
+
+    clock.tick(60)  # Maintain 60 FPS
+
+pygame.quit()
