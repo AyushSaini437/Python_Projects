@@ -12,7 +12,7 @@ class Ground:
             player.player_pos.x - CIRCLE_RADIUS,
             player.player_pos.y - CIRCLE_RADIUS,
             CIRCLE_RADIUS * 2,
-            CIRCLE_RADIUS * 2
+            CIRCLE_RADIUS * 2 + 1
         )
         return circle_rect.colliderect(self.game.ground_rect)
 
