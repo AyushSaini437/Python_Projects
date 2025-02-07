@@ -23,9 +23,7 @@ player_pos_y = SCREEN_HEIGHT - 100
 
 bullets = []  # List to store bullets
 enemies = []  # List to store enemies
-y_pos = 0
-
-score = 0
+y_pos = 0
 
 # Sounds 
 shoot_sound = pygame.mixer.Sound("sfx/laser-shot-ingame-230500.mp3")
@@ -84,8 +82,7 @@ while running:
 
         for enemy in enemies[:]:
             if bullte_rect.colliderect(enemy):
-                print("Hit!!!")
-                score += 1
+                print("Hit!!!")
                 enemies.remove(enemy)
                 bullets.remove(bullet)
                 create_enemy()
@@ -107,5 +104,4 @@ while running:
 
 # Quit Pygame
 pygame.quit()
-sys.exit()
-print(score)
+sys.exit()
